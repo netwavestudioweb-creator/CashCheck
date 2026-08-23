@@ -1,14 +1,35 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { Camera, ReceiptText } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
+import { Camera, ReceiptText, Mail } from 'lucide-react'
+import { useState } from 'react'
 
 export default function LoginPage() {
-  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
 
-  const handleBypass = () => {
-    // Redirection directe vers le dashboard sans authentification
-    router.push('/dashboard')
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
+    
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${location.origin}/auth/callback`,
+      },
+    })
+    
+    if (error) {
+      console.error('Error logging in:', error.message)
+      setMessage(error.message)
+    } else {
+      setMessage('Lien magique envoyé ! Vérifie tes emails.')
+    }
+    
+    setLoading(false)
   }
 
   return (
@@ -52,15 +73,41 @@ export default function LoginPage() {
         className="relative w-full mt-12 flex flex-col items-center animate-[fade-in_0.6s_ease-out]"
         style={{ animationDelay: '0.3s', animationFillMode: 'both' }}
       >
-        <button
-          onClick={handleBypass}
-          className="flex items-center justify-center w-full py-4 text-white rounded-full bg-gradient-to-r from-accent to-[#2B73BD] hover:opacity-90 active:scale-[0.98] hover:scale-[1.02] transition-all duration-300 font-semibold text-lg shadow-[0_8px_20px_rgba(55,138,221,0.25)]"
-        >
-          Continuer
-        </button>
-        
+        {/* Floating Bubble */}
+        <div className="absolute -top-16 right-0 bg-white/80 backdrop-blur-md border border-accent/20 rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.08)] w-36 z-10 animate-[pulse_4s_ease-in-out_infinite]">
+          <p className="text-sm font-semibold text-[#171717] mb-1">Reçu</p>
+          <p className="text-accent font-bold text-lg drop-shadow-sm">Détecté</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="w-full space-y-3 relative z-0">
+          <div className="relative">
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input 
+              type="email" 
+              placeholder="Ton adresse email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full pl-12 pr-4 py-4 rounded-full border border-gray-200 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all text-[#171717]"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex items-center justify-center w-full py-4 text-white rounded-full bg-gradient-to-r from-accent to-[#2B73BD] hover:opacity-90 active:scale-[0.98] hover:scale-[1.02] transition-all duration-300 font-semibold text-lg shadow-[0_8px_20px_rgba(55,138,221,0.25)] disabled:opacity-50"
+          >
+            {loading ? 'Envoi...' : 'Recevoir le lien magique'}
+          </button>
+          
+          {message && (
+            <p className="text-sm text-center font-medium mt-2 text-accent">
+              {message}
+            </p>
+          )}
+        </form>
+
         <p className="mt-4 text-[13px] text-gray-400 font-medium">
-          Mode test local (sans authentification)
+          En continuant, tu acceptes les CGU
         </p>
       </div>
     </div>

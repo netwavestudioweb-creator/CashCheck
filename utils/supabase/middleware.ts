@@ -34,14 +34,11 @@ export async function updateSession(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
   const isAuthCallback = request.nextUrl.pathname.startsWith('/auth/callback')
 
-  // COMMENTÉ POUR TEST LOCAL : Désactivation de la protection des routes pour voir l'interface
-  /*
   if (!user && !isLoginPage && !isAuthCallback) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
-  */
 
   if (user && isLoginPage) {
     const url = request.nextUrl.clone()
